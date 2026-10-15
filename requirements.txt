@@ -1,0 +1,21 @@
+# ==============================================================================
+# Super Eagles Athletics & Membership Management System (AMMS)
+# Python Sports Analytics, Statistical Modeling & Helper Engine Requirements
+# Automatically installed on Windows startup via start.bat
+# Always installs the latest available version of each package.
+# ==============================================================================
+
+# Core HTTP & API Client
+requests
+
+# Longitudinal Data Analytics & Time-Series Modeling
+pandas
+
+# Mathematical Matrix Vectorization & Riegel Performance Normalization
+numpy
+
+# Statistical Distribution Analysis & ACWR Regression
+scipy
+
+# Environment Variable Loader
+python-dotenv

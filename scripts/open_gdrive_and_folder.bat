@@ -1,0 +1,6 @@
+@echo off
+title Open Google Drive Ready Folder
+echo Opening Google Drive folder in default browser...
+start https://drive.google.com/drive/folders/1DKe5gP5fUDKCtWVbDOqV4ySqF7_wIwfv?usp=drive_link
+echo Opening clean Google Drive Ready folder in File Explorer...
+start explorer "C:\projects\Super Eagles Atheletes Management System\Google_Drive_Ready"
