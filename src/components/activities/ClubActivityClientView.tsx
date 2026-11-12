@@ -254,14 +254,14 @@ export function ClubActivityClientView({
 
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-green-900/60 px-3 py-1 text-xs font-bold text-green-300 border border-green-700/50">
-              Active Member: {currentUser?.name || "Sipho Sithole"}
+              Active Member: {currentUser?.name || "Club Member"}
             </span>
 
             {/* Direct WhatsApp Share button for offline attendance reporting */}
             <button
               type="button"
               onClick={() => {
-                const text = generateWhatsAppSummary(currentUser?.name || "Sipho Sithole");
+                const text = generateWhatsAppSummary(currentUser?.name || "Club Member");
                 window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
               }}
               className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-500 transition-all"

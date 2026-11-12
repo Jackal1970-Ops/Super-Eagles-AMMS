@@ -166,7 +166,7 @@ export function AIInsightsClientView({
   const handleGenerateCoachDirective = () => {
     setIsGenerating(true);
     setTimeout(() => {
-      const selectedName = athleteOptions.find(([id]) => id === selectedAthleteId)?.[1] || "Sipho Sithole (SEA-001)";
+      const selectedName = athleteOptions.find(([id]) => id === selectedAthleteId)?.[1] || athleteOptions[0]?.[1] || "Club Athlete";
       
       let res: {
         title: string;

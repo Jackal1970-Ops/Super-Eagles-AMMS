@@ -1,16 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Shield, Lock, Mail, ArrowRight, UserCheck, CheckCircle2, UserPlus, KeyRound, X, Send, Check, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@supereagles.co.za");
-  const [password, setPassword] = useState("AdminPass2026!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [demoSwitchEnabled, setDemoSwitchEnabled] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.demoSwitchEnabled) {
+          setDemoSwitchEnabled(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Forgot password modal state
   const [forgotOpen, setForgotOpen] = useState(false);
@@ -156,32 +168,34 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Master Developer Admin 1-Click Access */}
-          <div className="mb-5">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleQuickDemo("admin@supereagles.co.za", "AdminPass2026!", true)}
-              className="flex w-full items-center justify-between rounded-xl border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-600/20 to-green-600/25 p-3.5 text-left transition-all hover:border-amber-400 hover:from-amber-500/35 hover:shadow-lg hover:shadow-amber-500/10"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/25 text-amber-400 border border-amber-500/40 text-base font-black shadow-inner">
-                  👑
-                </span>
-                <div>
-                  <div className="text-xs font-black uppercase tracking-wider text-amber-300">
-                    DEVELOPER MASTER ADMIN LOGIN
-                  </div>
-                  <div className="text-[11px] text-slate-300">
-                    1-Click Access to ALL Features & Pages Unlocked
+          {/* Master Developer Admin 1-Click Access (Only shown in demo/evaluator mode) */}
+          {demoSwitchEnabled && (
+            <div className="mb-5">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => handleQuickDemo("admin@supereagles.co.za", "AdminPass2026!", true)}
+                className="flex w-full items-center justify-between rounded-xl border-2 border-amber-400/60 bg-gradient-to-r from-amber-500/25 via-amber-600/20 to-green-600/25 p-3.5 text-left transition-all hover:border-amber-400 hover:from-amber-500/35 hover:shadow-lg hover:shadow-amber-500/10"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/25 text-amber-400 border border-amber-500/40 text-base font-black shadow-inner">
+                    👑
+                  </span>
+                  <div>
+                    <div className="text-xs font-black uppercase tracking-wider text-amber-300">
+                      DEVELOPER MASTER ADMIN LOGIN
+                    </div>
+                    <div className="text-[11px] text-slate-300">
+                      1-Click Access to ALL Features & Pages Unlocked
+                    </div>
                   </div>
                 </div>
-              </div>
-              <span className="rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-black uppercase tracking-wider text-slate-950 shadow-sm hover:bg-amber-300">
-                {loading ? "..." : "ENTER"}
-              </span>
-            </button>
-          </div>
+                <span className="rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-black uppercase tracking-wider text-slate-950 shadow-sm hover:bg-amber-300">
+                  {loading ? "..." : "ENTER"}
+                </span>
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -252,88 +266,90 @@ export default function LoginPage() {
             </div>
           </form>
 
-          {/* Quick Demo Test Personas */}
-          <div className="mt-8 border-t border-slate-800/80 pt-6">
-            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <UserCheck className="h-3.5 w-3.5 text-green-400" />
-                Quick Test Personas
-              </span>
-              <span className="text-[10px] font-normal text-slate-500">1-Click Fill</span>
+          {/* Quick Demo Test Personas (Only shown in demo/evaluator mode) */}
+          {demoSwitchEnabled && (
+            <div className="mt-8 border-t border-slate-800/80 pt-6">
+              <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <UserCheck className="h-3.5 w-3.5 text-green-400" />
+                  Quick Test Personas
+                </span>
+                <span className="text-[10px] font-normal text-slate-500">1-Click Fill</span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo("admin@supereagles.co.za", "AdminPass2026!")}
+                  className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
+                >
+                  <div>
+                    <div className="font-semibold text-white">General Manager (Super Admin)</div>
+                    <div className="text-[10px] text-slate-400">admin@supereagles.co.za</div>
+                  </div>
+                  <span className="rounded bg-green-950 px-2 py-0.5 text-[10px] font-bold text-green-400">
+                    Full Access
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo("coach.hendrik@supereagles.co.za", "CoachPass2026!")}
+                  className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
+                >
+                  <div>
+                    <div className="font-semibold text-white">Coach (Hendrik Botha)</div>
+                    <div className="text-[10px] text-slate-400">coach.hendrik@supereagles.co.za</div>
+                  </div>
+                  <span className="rounded bg-blue-950 px-2 py-0.5 text-[10px] font-bold text-blue-400">
+                    Squad & AI
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo("athlete.sipho@supereagles.co.za", "AthletePass2026!")}
+                  className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
+                >
+                  <div>
+                    <div className="font-semibold text-white">Athlete (Sipho Sithole)</div>
+                    <div className="text-[10px] text-slate-400">athlete.sipho@supereagles.co.za</div>
+                  </div>
+                  <span className="rounded bg-purple-950 px-2 py-0.5 text-[10px] font-bold text-purple-400">
+                    Self 360°
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo("admin.club@supereagles.co.za", "ClubPass2026!")}
+                  className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
+                >
+                  <div>
+                    <div className="font-semibold text-white">Club Administrator</div>
+                    <div className="text-[10px] text-slate-400">admin.club@supereagles.co.za</div>
+                  </div>
+                  <span className="rounded bg-amber-950 px-2 py-0.5 text-[10px] font-bold text-amber-400">
+                    Attendance/CSV
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemo("committee@supereagles.co.za", "CommitteePass2026!")}
+                  className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
+                >
+                  <div>
+                    <div className="font-semibold text-white">Sponsorship Committee Chair</div>
+                    <div className="text-[10px] text-slate-400">committee@supereagles.co.za</div>
+                  </div>
+                  <span className="rounded bg-teal-950 px-2 py-0.5 text-[10px] font-bold text-teal-400">
+                    Reviews & Votes
+                  </span>
+                </button>
+              </div>
             </div>
-
-            <div className="mt-3 grid grid-cols-1 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("admin@supereagles.co.za", "AdminPass2026!")}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
-              >
-                <div>
-                  <div className="font-semibold text-white">General Manager (Super Admin)</div>
-                  <div className="text-[10px] text-slate-400">admin@supereagles.co.za</div>
-                </div>
-                <span className="rounded bg-green-950 px-2 py-0.5 text-[10px] font-bold text-green-400">
-                  Full Access
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("coach.hendrik@supereagles.co.za", "CoachPass2026!")}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
-              >
-                <div>
-                  <div className="font-semibold text-white">Coach (Hendrik Botha)</div>
-                  <div className="text-[10px] text-slate-400">coach.hendrik@supereagles.co.za</div>
-                </div>
-                <span className="rounded bg-blue-950 px-2 py-0.5 text-[10px] font-bold text-blue-400">
-                  Squad & AI
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("athlete.sipho@supereagles.co.za", "AthletePass2026!")}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
-              >
-                <div>
-                  <div className="font-semibold text-white">Athlete (Sipho Sithole)</div>
-                  <div className="text-[10px] text-slate-400">athlete.sipho@supereagles.co.za</div>
-                </div>
-                <span className="rounded bg-purple-950 px-2 py-0.5 text-[10px] font-bold text-purple-400">
-                  Self 360°
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("admin.club@supereagles.co.za", "ClubPass2026!")}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
-              >
-                <div>
-                  <div className="font-semibold text-white">Club Administrator</div>
-                  <div className="text-[10px] text-slate-400">admin.club@supereagles.co.za</div>
-                </div>
-                <span className="rounded bg-amber-950 px-2 py-0.5 text-[10px] font-bold text-amber-400">
-                  Attendance/CSV
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo("committee@supereagles.co.za", "CommitteePass2026!")}
-                className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-left text-xs hover:border-green-500/50 hover:bg-slate-800"
-              >
-                <div>
-                  <div className="font-semibold text-white">Sponsorship Committee Chair</div>
-                  <div className="text-[10px] text-slate-400">committee@supereagles.co.za</div>
-                </div>
-                <span className="rounded bg-teal-950 px-2 py-0.5 text-[10px] font-bold text-teal-400">
-                  Reviews & Votes
-                </span>
-              </button>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* POPIA notice */}

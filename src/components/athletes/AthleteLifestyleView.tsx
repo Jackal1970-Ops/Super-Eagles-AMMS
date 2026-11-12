@@ -140,7 +140,7 @@ export function AthleteLifestyleView({
       title: "Sunday 10km Scenic Trail Walk & Recovery",
       day: "Sunday 07:00 AM",
       location: "Emmarentia Dam Loop",
-      leader: "Hendrik & Sipho",
+      leader: "Pack Captains",
       type: "SOCIAL",
       paceNote: "Gentle nature stride & outdoor mobility stretching",
     },

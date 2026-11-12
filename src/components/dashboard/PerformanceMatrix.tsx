@@ -803,6 +803,20 @@ export function PerformanceMatrix({
                     </div>
                   );
                 })}
+
+                {positionedNodes.length === 0 && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-20 pointer-events-none">
+                    <div className="rounded-2xl border border-slate-700/60 bg-slate-900/90 p-6 max-w-sm shadow-2xl backdrop-blur-md pointer-events-auto">
+                      <Users className="mx-auto h-10 w-10 text-slate-500 mb-3" />
+                      <h3 className="text-sm font-bold text-white">No Athletes to Display</h3>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {athletes.length === 0
+                          ? "No athletes currently registered. When athletes register or are imported via CSV, their Performance Index vs. Club Loyalty coordinates will appear here dynamically."
+                          : "No athletes match the selected filter. Try selecting 'All Squads' or 'All Quadrants' above."}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

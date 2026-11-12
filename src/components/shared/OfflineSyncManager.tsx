@@ -26,6 +26,7 @@ export function OfflineSyncManager() {
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [userName, setUserName] = useState<string>("Club Member");
 
   // Monitor network and server status
   useEffect(() => {
@@ -72,6 +73,10 @@ export function OfflineSyncManager() {
       const res = await fetch("/api/auth/me", { method: "GET", cache: "no-store" });
       if (res.ok) {
         setServerReachable(true);
+        const data = await res.json().catch(() => null);
+        if (data?.user?.name) {
+          setUserName(data.user.name);
+        }
         // If server is back online and we have pending items, auto-sync!
         if (getOfflineQueue().length > 0) {
           handleSync();
@@ -105,13 +110,13 @@ export function OfflineSyncManager() {
   };
 
   const handleWhatsAppShare = () => {
-    const text = generateWhatsAppSummary("Sipho Sithole");
+    const text = generateWhatsAppSummary(userName);
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/?text=${encoded}`, "_blank");
   };
 
   const handleCopySummary = () => {
-    const text = generateWhatsAppSummary("Sipho Sithole");
+    const text = generateWhatsAppSummary(userName);
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
