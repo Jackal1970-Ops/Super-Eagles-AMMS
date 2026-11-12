@@ -148,6 +148,9 @@ async function main() {
   // 4. Synchronize local host AppData database if running on workstation topology
   if (localAppDb && fs.existsSync(rootDb)) {
     try {
+      if (localAppDir && !fs.existsSync(localAppDir)) {
+        fs.mkdirSync(localAppDir, { recursive: true });
+      }
       fs.copyFileSync(rootDb, localAppDb);
       console.log(`✓ Synchronized clean database to host runtime: ${localAppDb}`);
     } catch (syncErr) {
