@@ -12,6 +12,7 @@ import {
   calculateAthletePerformanceIndex,
   calculateImprovementScore,
   classifyTrend,
+  calculateRaceResultImprovement,
 } from "../performanceIndex";
 import { calculateClubContributionScore } from "../clubContribution";
 import {
@@ -22,6 +23,7 @@ import { predictRacePerformance } from "../predictions";
 import { calculateAthleteReadiness } from "../readiness";
 import { evaluateReciprocityPattern } from "../reciprocity";
 import { computeDispersedCoordinates } from "@/components/dashboard/PerformanceMatrix";
+import { calculateACWR } from "../workload";
 
 describe("1. Pace and Durability Calculations", () => {
   it("formats seconds into hh:mm:ss accurately", () => {
@@ -36,6 +38,9 @@ describe("1. Pace and Durability Calculations", () => {
     expect(paceSec).toBe(270);
     expect(formatPace(paceSec)).toBe("4:30/km");
     expect(parsePace("4:30/km")).toBe(270);
+    expect(formatPace(299.6)).toBe("5:00/km");
+    expect(parsePace("4:60/km")).toBe(0);
+    expect(parsePace("4:30 garbage")).toBe(0);
   });
 
   it("calculates pace deterioration accurately", () => {
@@ -77,6 +82,9 @@ describe("2. World Athletics / Distance Normalisation", () => {
     const result = calculateNormalizedScore(42.195, 16200, "MALE");
     expect(result.score).toBeLessThan(60);
     expect(result.score).toBeGreaterThan(15);
+    expect(result.worldAthleticsPoints).toBe(0);
+    expect(result.isOfficialWorldAthleticsScore).toBe(false);
+    expect(result.clubEquivalentPoints).toBeGreaterThan(0);
   });
 });
 
@@ -115,6 +123,17 @@ describe("3. Athlete Performance Index (API)", () => {
     expect(classifyTrend(-4.0)).toBe("Watch");
     expect(classifyTrend(-8.0)).toBe("Declining");
     expect(classifyTrend(-15.0)).toBe("Significant Decline");
+  });
+
+  it("derives trajectory from dated race evidence rather than athlete identity", () => {
+    const trend = calculateRaceResultImprovement([
+      { date: "2026-10-01", distanceKm: 10, officialTimeSeconds: 2400, verificationStatus: "VERIFIED" },
+      { date: "2026-03-01", distanceKm: 10, officialTimeSeconds: 2700, verificationStatus: "VERIFIED" },
+      { date: "2025-10-01", distanceKm: 21.0975, officialTimeSeconds: 6000, verificationStatus: "VERIFIED" },
+    ]);
+    expect(trend.improvementScore).toBeGreaterThan(70);
+    expect(["Improving", "Rapid Improvement"]).toContain(trend.trendClassification);
+    expect(calculateRaceResultImprovement([]).trendClassification).toBe("Stable");
   });
 });
 
@@ -218,6 +237,15 @@ describe("6. Race Prediction Engine", () => {
 });
 
 describe("7. Readiness & Reciprocity Engines", () => {
+  it("does not invent a workload baseline when no valid sessions exist", () => {
+    const acwr = calculateACWR([
+      { date: new Date(), distanceKm: 10, durationMinutes: 0, sessionRpe: 5 },
+      { date: new Date(), distanceKm: 10, durationMinutes: 60, sessionRpe: 99 },
+    ]);
+    expect(acwr.status).toBe("INSUFFICIENT_DATA");
+    expect(acwr.chronicWeeklyAverage).toBe(0);
+    expect(acwr.injuryRiskMultiplier).toBe("Not estimated");
+  });
   it("evaluates readiness as coaching indicator with non-medical disclaimer", () => {
     const ready = calculateAthleteReadiness({
       sleepQuality: 5,

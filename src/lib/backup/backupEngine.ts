@@ -406,7 +406,7 @@ export async function restoreSystemBackup(
     }
 
     const primaryDb = resolveSqliteDatabasePath();
-    const rootDb = path.resolve(process.cwd(), "dev.db");
+    const recoveryDb = path.join(path.dirname(primaryDb), "recovery_snapshot.db");
 
     // Disconnect Prisma
     await prisma.$disconnect();
@@ -414,9 +414,7 @@ export async function restoreSystemBackup(
     try {
       // Copy backup over primary database
       fs.copyFileSync(backupFilePath, primaryDb);
-      if (fs.existsSync(rootDb)) {
-        fs.copyFileSync(backupFilePath, rootDb);
-      }
+      fs.copyFileSync(backupFilePath, recoveryDb);
 
       // Reconnect and verify integrity
       await prisma.$connect();
@@ -427,7 +425,7 @@ export async function restoreSystemBackup(
         // Rollback immediately to safety backup
         const safetyPath = path.join(resolvedDir, safetyBackupFile);
         fs.copyFileSync(safetyPath, primaryDb);
-        if (fs.existsSync(rootDb)) fs.copyFileSync(safetyPath, rootDb);
+        fs.copyFileSync(safetyPath, recoveryDb);
         throw new Error(`Integrity check failed (${integrityVal}). Rolled back to safety snapshot.`);
       }
 

@@ -40,10 +40,10 @@ export function ExecutiveDecisionsHub({ initialData }: ExecutiveDecisionsHubProp
     whoNeedsAttention: initialData.whoNeedsAttention || [],
     whoQualifies: initialData.whoQualifies || [],
     sponsorshipSummary: initialData.sponsorshipSummary || {
-      totalFunds: 45000,
-      allocatedFunds: 32000,
-      activeCampaigns: 3,
-      beneficiariesCount: 14,
+      totalFunds: 0,
+      allocatedFunds: 0,
+      activeCampaigns: 0,
+      beneficiariesCount: 0,
     },
   } : null);
   const [loading, setLoading] = useState(!initialData);
@@ -90,10 +90,10 @@ export function ExecutiveDecisionsHub({ initialData }: ExecutiveDecisionsHubProp
           whoNeedsAttention,
           whoQualifies,
           sponsorshipSummary: res.sponsorshipSummary || {
-            totalFunds: 45000,
-            allocatedFunds: 32000,
-            activeCampaigns: 3,
-            beneficiariesCount: 14,
+            totalFunds: 0,
+            allocatedFunds: 0,
+            activeCampaigns: 0,
+            beneficiariesCount: 0,
           },
         });
       })

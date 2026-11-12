@@ -13,7 +13,7 @@ import {
   Shield,
   HelpCircle,
 } from "lucide-react";
-import { calculateAthletePerformanceIndex } from "@/lib/analytics/performanceIndex";
+import { calculateAthletePerformanceIndex, calculateRaceResultImprovement } from "@/lib/analytics/performanceIndex";
 import { formatDuration, formatPace } from "@/lib/analytics/pace";
 import { DISTANCE_BENCHMARKS } from "@/lib/analytics/normalisation";
 
@@ -38,15 +38,18 @@ export default async function PerformancePage() {
 
   // Calculate API for each athlete
   const rankedAthletes = athletes.map((a) => {
-    const isImproving = a.athleteNumber === "SEA-003";
-    const isDeclining = a.athleteNumber === "SEA-004";
+    const trend = calculateRaceResultImprovement(a.raceResults);
+    const isImproving = trend.trendClassification === "Improving" || trend.trendClassification === "Rapid Improvement";
     const basePerf = a.athleteStatus === "ELITE" ? 92 : a.athleteStatus === "PERFORMANCE" ? 78 : 68;
+    const reliability = Math.min(95, 55 + a.raceResults.filter((r) => r.verificationStatus === "VERIFIED").length * 8);
 
     const api = calculateAthletePerformanceIndex(
       basePerf,
-      isImproving ? 88 : isDeclining ? 46 : 70,
+      trend.improvementScore,
       80,
-      isDeclining ? 62 : 84
+      reliability,
+      undefined,
+      trend
     );
 
     const latestRace = a.raceResults[0];
@@ -79,7 +82,7 @@ export default async function PerformancePage() {
               Performance & Normalisation Engine
             </h1>
             <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800 dark:bg-green-950 dark:text-green-300">
-              World Athletics Standard
+              Club Evidence Model
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -109,9 +112,9 @@ export default async function PerformancePage() {
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 pt-1">
               <div className="rounded-xl border border-slate-700/70 bg-slate-900/80 p-3">
-                <span className="font-bold text-emerald-400 text-xs">1. World Athletics Normalisation</span>
+                <span className="font-bold text-emerald-400 text-xs">1. Club Performance Normalisation</span>
                 <p className="mt-1 text-[11px] text-slate-300 leading-normal">
-                  A 15-minute 5K and a 2:25:00 marathon require completely different physiological energy systems. Raw race times are non-linearly mapped across World Athletics scoring curves so sprint, middle, and ultra-marathon runners compete on the same 0–100 baseline.
+                  Race times are mapped to the club's disclosed 0–100 policy scale using configured reference standards and Riegel distance equivalence. This is not an official World Athletics result score.
                 </p>
               </div>
 
@@ -244,10 +247,10 @@ export default async function PerformancePage() {
         </div>
       </div>
 
-      {/* World Athletics Benchmarks Reference Table */}
+      {/* Club benchmark reference table */}
       <div className="rounded-2xl border border-slate-700/80 bg-[#1E293B]/85 p-5 shadow-lg backdrop-blur-md">
         <h3 className="text-sm font-bold text-white">
-          Configured World Athletics & Club Benchmark Standards
+          Configured Club Benchmark Standards
         </h3>
         <p className="mt-0.5 text-xs text-slate-400">
           Raw race times are scaled across physiological energy curves to enable direct comparison between 5k and 90k ultra runners.

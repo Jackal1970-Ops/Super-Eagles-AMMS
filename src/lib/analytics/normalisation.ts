@@ -1,7 +1,8 @@
 /**
  * Super Eagles Performance Normalisation Engine
- * Uses World Athletics and Riegel-Purdy principles to normalise competition times
- * across different distances and genders on a transparent 0-100 scale.
+ * Uses club policy benchmarks plus the published Riegel distance model to
+ * normalise competition times on a transparent internal 0-100 scale.
+ * This is not the official World Athletics scoring-table calculation.
  */
 
 export interface DistanceBenchmark {
@@ -117,10 +118,12 @@ export function getClosestBenchmark(distanceKm: number): DistanceBenchmark {
 
 export interface NormalisedScoreResult {
   score: number; // 0 - 100
-  worldAthleticsPoints: number; // roughly 400 - 1200
+  worldAthleticsPoints: number; // 0 unless an official WA lookup table is integrated
+  clubEquivalentPoints: number; // internal display scale; not an official WA result score
+  isOfficialWorldAthleticsScore: false;
   equivalent10kTimeSeconds: number;
   equivalentMarathonTimeSeconds: number;
-  percentileRank: number;
+  percentileRank: number; // 0: no population dataset is available for a defensible percentile
   formulaExplanation: string;
 }
 
@@ -140,6 +143,8 @@ export function calculateNormalizedScore(
     return {
       score: 0,
       worldAthleticsPoints: 0,
+      clubEquivalentPoints: 0,
+      isOfficialWorldAthleticsScore: false,
       equivalent10kTimeSeconds: 0,
       equivalentMarathonTimeSeconds: 0,
       percentileRank: 0,
@@ -155,7 +160,8 @@ export function calculateNormalizedScore(
   const scaleToBenchmarkRatio = Math.pow(benchmark.distanceKm / distanceKm, 1.06);
   const adjustedTimeAtBenchmark = timeSeconds * scaleToBenchmarkRatio;
 
-  // Race walking standard adjustment factor (World Athletics certified ~1.35x running duration)
+  // Club policy conversion for mixed run/walk dashboards. This is explicitly
+  // not an official World Athletics equivalence or result score.
   const walkingAdjustmentFactor = isWalking ? 1.35 : 1.0;
 
   const eliteStandard = (isFemale
@@ -194,15 +200,17 @@ export function calculateNormalizedScore(
 
   const score = Number(Math.min(100, Math.max(0, rawScore)).toFixed(1));
 
-  // World athletics points estimation (approx 500-1250)
-  const worldAthleticsPoints = Math.round(score * 12);
+  // Internal club presentation scale. Official World Athletics result scores
+  // require the published event/sex scoring tables and must not be inferred.
+  const clubEquivalentPoints = Math.round(score * 12);
+  const worldAthleticsPoints = 0;
 
   // Equivalent times via Riegel
   const equivalent10kTimeSeconds = Math.round(timeSeconds * Math.pow(10.0 / distanceKm, 1.06));
   const equivalentMarathonTimeSeconds = Math.round(timeSeconds * Math.pow(42.195 / distanceKm, 1.06));
 
-  // Percentile estimate in competitive athletics club
-  const percentileRank = Math.min(99, Math.max(5, Math.round(score * 0.98)));
+  // A percentile requires a defined comparison population; none is inferred.
+  const percentileRank = 0;
 
   const formulaExplanation = 
     `Normalised via standard distance curve (${benchmark.name}). ` +
@@ -213,6 +221,8 @@ export function calculateNormalizedScore(
   return {
     score,
     worldAthleticsPoints,
+    clubEquivalentPoints,
+    isOfficialWorldAthleticsScore: false,
     equivalent10kTimeSeconds,
     equivalentMarathonTimeSeconds,
     percentileRank,

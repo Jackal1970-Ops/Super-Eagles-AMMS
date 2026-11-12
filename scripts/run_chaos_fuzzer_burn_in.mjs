@@ -249,7 +249,7 @@ async function main() {
     reportCheck(
       "Monotonic Race Duration Scaling (5k to 160k Ultra)",
       monotonicStrict,
-      "Prediction curves strictly obey thermodynamic conservation of energy (dT/dD > 0)."
+      "Riegel projections remain strictly monotonic as target distance increases (dT/dD > 0)."
     );
 
     // Weights sum invariant check

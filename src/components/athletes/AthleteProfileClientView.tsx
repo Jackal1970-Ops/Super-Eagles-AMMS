@@ -214,7 +214,7 @@ export function AthleteProfileClientView({
           value: apiResult.verifiedPerformanceScore,
           weightPercent: apiResult.weights.verifiedPerformanceWeight * 100,
           weightedResult: apiResult.breakdown.weightedVerified,
-          sourceData: "World Athletics normalised scoring of chip-verified race results.",
+          sourceData: "Club-policy normalised scoring of chip-verified race results; not an official World Athletics result score.",
         },
         {
           name: "Longitudinal Improvement",

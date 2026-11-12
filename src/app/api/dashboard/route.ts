@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
-import { calculateAthletePerformanceIndex } from "@/lib/analytics/performanceIndex";
+import { calculateAthletePerformanceIndex, calculateRaceResultImprovement } from "@/lib/analytics/performanceIndex";
 import { calculateClubContributionScore } from "@/lib/analytics/clubContribution";
 import { calculateNormalizedScore } from "@/lib/analytics/normalisation";
 
@@ -28,7 +28,7 @@ export async function GET() {
         include: {
           raceResults: {
             orderBy: { date: "desc" },
-            take: 3,
+            take: 20,
           },
           trainingActivities: {
             orderBy: { date: "desc" },
@@ -36,7 +36,6 @@ export async function GET() {
           },
           clubAttendances: {
             orderBy: { checkInTime: "desc" },
-            take: 1,
           },
           volunteerContributions: true,
           loyaltyExemptions: {
@@ -48,6 +47,7 @@ export async function GET() {
               transactions: true,
             },
           },
+          goals: { where: { status: "IN_PROGRESS" }, take: 1 },
         },
         orderBy: { athleteNumber: "asc" },
       }),
@@ -89,9 +89,6 @@ export async function GET() {
       // Performance and trajectory
       const isElite = a.athleteStatus === "ELITE";
       const isDev = a.athleteStatus === "DEVELOPMENT";
-      const isImprovingAthlete = a.athleteNumber === "SEA-003";
-      const isDecliningAthlete = a.athleteNumber === "SEA-004";
-
       let basePerf = isElite ? 86 : isDev ? 68 : 62;
       const latestResult = a.raceResults[0];
       if (latestResult && latestResult.distanceKm > 0 && latestResult.officialTimeSeconds > 0) {
@@ -104,15 +101,21 @@ export async function GET() {
         basePerf = norm.score;
       }
 
+      const raceResults = a.raceResults || [];
+      const trend = calculateRaceResultImprovement(raceResults);
+      const verifiedResultCount = raceResults.filter((result) => result.verificationStatus === "VERIFIED").length;
+      const reliabilityScore = Math.min(95, 55 + verifiedResultCount * 8);
       const api = calculateAthletePerformanceIndex(
         basePerf,
-        isImprovingAthlete ? 88 : isDecliningAthlete ? 45 : 70,
-        80,
-        isDecliningAthlete ? 60 : 85
+        trend.improvementScore,
+        (a.goals?.length ?? 0) > 0 ? 75 : 50,
+        reliabilityScore,
+        undefined,
+        trend
       );
 
       const recentPbsCount = a.raceResults.filter((r) => r.isPersonalBest).length;
-      const progressionScore = isImprovingAthlete ? 88 : Math.round(api.totalIndex);
+      const progressionScore = Math.round(trend.improvementScore);
 
       // Inactivity calculation (days since last training or club attendance)
       const lastTrainingDate = a.trainingActivities[0]?.date ? new Date(a.trainingActivities[0].date).getTime() : 0;
@@ -160,9 +163,9 @@ export async function GET() {
     }
 
     const sponsorshipSummary = {
-      totalFunds: Math.max(45000, totalAllocatedFunds + 15000),
+      totalFunds: totalAllocatedFunds,
       allocatedFunds: totalAllocatedFunds,
-      activeCampaigns: 3,
+      activeCampaigns: sponsorships.length,
       beneficiariesCount: sponsorships.length,
     };
 

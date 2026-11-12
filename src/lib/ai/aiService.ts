@@ -215,8 +215,8 @@ WORLD-CLASS ATHLETIC COACHING METHODOLOGIES (MANDATORY COACHING PRINCIPLES):
    - Prioritize aerobic capillary density and mitochondrial development through consistent Zone 2 aerobic volume before introducing anaerobic sharpening.
 3. RENATO CANOVA (Marathon & Ultra Specificity):
    - Progressive long runs extending to 85-95% of target competition race pace. Pacing durability is developed through progressive blocks with fast finishes.
-4. DR. TIM GABBETT (Acute:Chronic Workload Ratio - ACWR):
-   - ACWR sweet spot is 0.80–1.30. ACWR > 1.45 represents the injury danger zone. If acute workload spikes, you MUST prescribe an immediate deload.
+4. ACUTE:CHRONIC WORKLOAD RATIO (ACWR) ADVISORY:
+   - Treat ACWR as a descriptive load-progression signal, never as a standalone injury predictor. Ratios outside the club advisory range require contextual coach review, not an automatic medical conclusion or mandatory deload.
 5. PROF. TIM NOAKES (Lore of Running & Central Governor):
    - Recognize fatigue as a protective brain mechanism. Emphasize adequate glycogen replenishment, electrolyte balance, and neuromuscular recovery.
 6. ATHLETICS SOUTH AFRICA (ASA) & WORLD ATHLETICS (WA) RULES:

@@ -18,7 +18,7 @@ import {
   FileCheck,
   CheckCircle2,
 } from "lucide-react";
-import { calculateAthletePerformanceIndex } from "@/lib/analytics/performanceIndex";
+import { calculateAthletePerformanceIndex, calculateRaceResultImprovement } from "@/lib/analytics/performanceIndex";
 import { calculateClubContributionScore } from "@/lib/analytics/clubContribution";
 import { evaluateReciprocityPattern } from "@/lib/analytics/reciprocity";
 import { formatDuration } from "@/lib/analytics/pace";
@@ -49,8 +49,9 @@ export default async function DashboardPage(props: DashboardPageProps) {
     include: {
       raceResults: {
         orderBy: { date: "desc" },
-        take: 3,
+        take: 20,
       },
+      trainingActivities: { orderBy: { date: "desc" }, take: 1 },
       clubAttendances: true,
       volunteerContributions: true,
       loyaltyExemptions: {
@@ -122,7 +123,7 @@ export default async function DashboardPage(props: DashboardPageProps) {
 
     totalContributionSum += ccli.totalScore;
 
-    // Performance Index via World Athletics & ASA Authoritative Normalisation
+    // Performance Index via disclosed club normalisation and verified race data
     const latestResult = a.raceResults[0];
     let perfBase = isElite ? 86 : isDev ? 68 : 62;
     if (latestResult && latestResult.distanceKm > 0 && latestResult.officialTimeSeconds > 0) {
@@ -135,17 +136,19 @@ export default async function DashboardPage(props: DashboardPageProps) {
       perfBase = norm.score;
     }
 
-    // Trajectory flag
-    const isImproving = a.athleteNumber === "SEA-003" || perfBase > 78;
-    const isDeclining = a.athleteNumber === "SEA-004";
+    const trend = calculateRaceResultImprovement(a.raceResults);
+    const isImproving = trend.trendClassification === "Improving" || trend.trendClassification === "Rapid Improvement";
+    const isDeclining = trend.trendClassification === "Declining" || trend.trendClassification === "Significant Decline";
     if (isImproving) improvingCount++;
     if (isDeclining) decliningCount++;
 
     const api = calculateAthletePerformanceIndex(
       perfBase,
-      isImproving ? 88 : isDeclining ? 45 : 70,
-      80,
-      isDeclining ? 60 : 85
+      trend.improvementScore,
+      a.goals.length > 0 ? 75 : 50,
+      Math.min(95, 55 + a.raceResults.filter((r) => r.verificationStatus === "VERIFIED").length * 8),
+      undefined,
+      trend
     );
 
     // Reciprocity review evaluation
@@ -232,7 +235,7 @@ export default async function DashboardPage(props: DashboardPageProps) {
     totalSponsorshipSpendZar: totalSpend,
     avgClubContributionScore: avgContribution,
     upcomingTargetRacesCount: upcomingRaces.length,
-    athletesLikelyToAchieveTargetsCount: Math.round(athletes.length * 0.65),
+    athletesLikelyToAchieveTargetsCount: athletes.filter((a) => a.goals.length > 0).length,
   };
 
   // Construct initial decision slices for immediate SSR rendering
@@ -251,27 +254,45 @@ export default async function DashboardPage(props: DashboardPageProps) {
     }));
 
   const whoIsImproving = athletes
-    .filter((a) => a.athleteNumber === "SEA-003" || a.raceResults.some((r) => r.isPersonalBest))
+    .map((a) => ({ athlete: a, trend: calculateRaceResultImprovement(a.raceResults) }))
+    .filter(({ athlete, trend }) =>
+      trend.trendClassification === "Improving" ||
+      trend.trendClassification === "Rapid Improvement" ||
+      athlete.raceResults.some((r) => r.isPersonalBest)
+    )
     .slice(0, 5)
-    .map((a) => ({
+    .map(({ athlete: a, trend }) => ({
       id: a.id,
       athleteNumber: a.athleteNumber,
       firstName: a.firstName,
       lastName: a.lastName,
-      progressionScore: a.athleteNumber === "SEA-003" ? 88 : 78,
+      primaryDiscipline: a.primaryDiscipline,
+      progressionScore: Math.round(trend.improvementScore),
+      improvementPercent: trend.sixMonthImprovementPercent,
       recentPbsCount: a.raceResults.filter((r) => r.isPersonalBest).length,
+      attendanceRate: Math.round((a.clubAttendances.length / Math.max(1, totalActivitiesCount)) * 100),
+      volunteerCount: a.volunteerContributions.length,
     }));
 
   const whoNeedsAttention = athletes
-    .filter((a) => a.athleteNumber === "SEA-004" || a.clubAttendances.length < 2)
+    .map((a) => {
+      const lastTraining = a.trainingActivities[0]?.date?.getTime() || 0;
+      const lastAttendance = a.clubAttendances.reduce(
+        (latest, attendance) => Math.max(latest, attendance.checkInTime?.getTime() || 0),
+        0
+      );
+      const lastActivity = Math.max(lastTraining, lastAttendance, a.membershipStartDate.getTime());
+      return { athlete: a, inactivityDays: Math.max(0, Math.floor((Date.now() - lastActivity) / 86400000)) };
+    })
+    .filter(({ athlete, inactivityDays }) => athlete.clubAttendances.length < 2 || inactivityDays > 14)
     .slice(0, 5)
-    .map((a) => ({
+    .map(({ athlete: a, inactivityDays }) => ({
       id: a.id,
       athleteNumber: a.athleteNumber,
       firstName: a.firstName,
       lastName: a.lastName,
       attendanceRate: Math.round((a.clubAttendances.length / Math.max(1, totalActivitiesCount)) * 100),
-      inactivityDays: a.athleteNumber === "SEA-004" ? 18 : 12,
+      inactivityDays,
     }));
 
   const whoQualifies = athletes
@@ -293,9 +314,9 @@ export default async function DashboardPage(props: DashboardPageProps) {
     whoNeedsAttention,
     whoQualifies,
     sponsorshipSummary: {
-      totalFunds: Math.max(45000, totalSpend + 15000),
+      totalFunds: totalSpend,
       allocatedFunds: totalSpend,
-      activeCampaigns: 3,
+      activeCampaigns: athletes.filter((a) => a.sponsorships.length > 0).length,
       beneficiariesCount: athletes.filter((a) => a.sponsorships.length > 0).length,
     },
   };
@@ -472,7 +493,7 @@ export default async function DashboardPage(props: DashboardPageProps) {
                 </span>
               </div>
               <div className="mt-1 text-xs text-slate-400">
-                World Athletics Gold Label • Premier Sub-2:30 club qualification standard
+                Club target event • Verify current organiser qualification rules before entry
               </div>
             </div>
           </div>
@@ -490,27 +511,27 @@ export default async function DashboardPage(props: DashboardPageProps) {
             High improvement trajectory + exceptional attendance + low current sponsorship cost.
           </p>
 
-          <div className="mt-3 rounded-xl border border-teal-800/40 bg-slate-950/90 p-4">
+          {whoIsImproving[0] ? <div className="mt-3 rounded-xl border border-teal-800/40 bg-slate-950/90 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-bold text-white text-sm">Lerato Ndlovu (SEA-003)</div>
-                <div className="text-xs text-slate-400">Half Marathon / 10 km • Coach Ayanda Zulu</div>
+                <div className="font-bold text-white text-sm">{whoIsImproving[0].firstName} {whoIsImproving[0].lastName} ({whoIsImproving[0].athleteNumber})</div>
+                <div className="text-xs text-slate-400">{whoIsImproving[0].primaryDiscipline}</div>
               </div>
               <span className="rounded bg-teal-950 px-2.5 py-1 text-[10px] font-bold text-teal-300 border border-teal-700">
-                +8.4% Improvement
+                {whoIsImproving[0].improvementPercent >= 0 ? "+" : ""}{whoIsImproving[0].improvementPercent.toFixed(1)}% Improvement
               </span>
             </div>
             <div className="mt-2 text-xs text-slate-300 leading-relaxed">
-              100% internal run attendance, 4 volunteer duties. Recommending sponsorship upgrade to Tier-2 Development package.
+              {whoIsImproving[0].attendanceRate}% internal-run attendance and {whoIsImproving[0].volunteerCount} recorded volunteer duties. Review the evidence before any sponsorship decision.
             </div>
             <Link
-              href="/athletes/SEA-003"
+              href={`/athletes/${whoIsImproving[0].id}`}
               className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors"
             >
               <span>View Development Dossier</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </div>
+          </div> : <p className="mt-3 text-xs text-slate-500">No evidence-backed improvement spotlight is available yet.</p>}
         </div>
       </div>
     </div>

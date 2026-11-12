@@ -15,7 +15,7 @@ export interface ACWRResult {
   acuteLoad: number; // Past 7 days workload
   chronicWeeklyAverage: number; // Rolling 28 days weekly average
   acwrRatio: number;
-  status: "OPTIMAL" | "UNDER_TRAINING" | "OVER_REACHING" | "DANGER_ZONE";
+  status: "OPTIMAL" | "UNDER_TRAINING" | "OVER_REACHING" | "DANGER_ZONE" | "INSUFFICIENT_DATA";
   label: string;
   batteryLevelPercent: number; // 0 to 100 for visual battery UI
   colorClass: string;
@@ -40,7 +40,9 @@ export function calculateACWR(
   const validSessions = sessions.filter((s) => {
     const sessionTime = new Date(s.date).getTime();
     const diffDays = (refTime - sessionTime) / ONE_DAY_MS;
-    return diffDays >= 0 && diffDays <= 28;
+    return Number.isFinite(sessionTime) && diffDays >= 0 && diffDays < 28 &&
+      Number.isFinite(s.durationMinutes) && s.durationMinutes > 0 &&
+      Number.isFinite(s.sessionRpe) && s.sessionRpe >= 1 && s.sessionRpe <= 10;
   });
 
   // Calculate session training load (RPE x Duration in minutes)
@@ -50,16 +52,31 @@ export function calculateACWR(
   validSessions.forEach((s) => {
     const sessionTime = new Date(s.date).getTime();
     const diffDays = (refTime - sessionTime) / ONE_DAY_MS;
-    const sessionLoad = (s.sessionRpe || 5) * (s.durationMinutes || 45);
+    const sessionLoad = s.sessionRpe * s.durationMinutes;
 
     chronicTotal28 += sessionLoad;
-    if (diffDays <= 7) {
+    if (diffDays < 7) {
       acuteLoad += sessionLoad;
     }
   });
 
   // Chronic weekly average (28 days / 4 weeks)
-  const chronicWeeklyAverage = Math.max(chronicTotal28 / 4, 250); // baseline floor to prevent division by zero
+  const chronicWeeklyAverage = chronicTotal28 / 4;
+
+  if (validSessions.length === 0 || chronicWeeklyAverage <= 0) {
+    return {
+      acuteLoad: 0,
+      chronicWeeklyAverage: 0,
+      acwrRatio: 0,
+      status: "INSUFFICIENT_DATA",
+      label: "Insufficient Workload Data",
+      batteryLevelPercent: 0,
+      colorClass: "text-slate-400 bg-slate-500/20 border-slate-500/30",
+      injuryRiskMultiplier: "Not estimated",
+      actionableDirective: "Record valid session duration and session-RPE data before interpreting workload progression.",
+      disclaimer: "ACWR is a descriptive non-medical workload ratio, not an injury prediction or medical diagnosis. Thresholds are advisory and must be interpreted with athlete-specific context and other evidence.",
+    };
+  }
 
   // Acute:Chronic ratio
   const acwrRatio = Number((acuteLoad / chronicWeeklyAverage).toFixed(2));
@@ -68,7 +85,7 @@ export function calculateACWR(
   let label = "Optimal Adaptation (Sweet Spot)";
   let batteryLevelPercent = 90;
   let colorClass = "text-emerald-400 bg-emerald-500/20 border-emerald-500/30";
-  let injuryRiskMultiplier = "Lowest (< 4% risk)";
+  let injuryRiskMultiplier = "No injury probability estimated";
   let actionableDirective =
     "Cardiovascular progression is calibrated. Continue scheduled aerobic tempo and long run volume.";
 
@@ -77,7 +94,7 @@ export function calculateACWR(
     label = "Under-Training / Tapering";
     batteryLevelPercent = Math.max(Math.round((acwrRatio / 0.8) * 50), 20);
     colorClass = "text-blue-400 bg-blue-500/20 border-blue-500/30";
-    injuryRiskMultiplier = "Low (Fitness decay risk)";
+    injuryRiskMultiplier = "No injury probability estimated";
     actionableDirective =
       "Aerobic stimulus has dipped below chronic threshold. Schedule a weekend pack long run or interval session to maintain conditioning.";
   } else if (acwrRatio >= 0.8 && acwrRatio <= 1.3) {
@@ -85,7 +102,7 @@ export function calculateACWR(
     label = "Aerobic Sweet Spot";
     batteryLevelPercent = 85 + Math.round(((1.3 - acwrRatio) / 0.5) * 15);
     colorClass = "text-emerald-400 bg-emerald-500/20 border-emerald-500/30";
-    injuryRiskMultiplier = "Lowest (< 4% injury probability)";
+    injuryRiskMultiplier = "No injury probability estimated";
     actionableDirective =
       "Super-compensation zone: Tissue stress is balanced with recovery capacity. High training tolerance.";
   } else if (acwrRatio > 1.3 && acwrRatio <= 1.5) {
@@ -93,7 +110,7 @@ export function calculateACWR(
     label = "Functional Overreaching";
     batteryLevelPercent = 65;
     colorClass = "text-amber-400 bg-amber-500/20 border-amber-500/30";
-    injuryRiskMultiplier = "Moderate (1.5x baseline)";
+    injuryRiskMultiplier = "Elevated load ratio; interpret with other evidence";
     actionableDirective =
       "Acute spike detected. Avoid back-to-back hard threshold days. Prioritize 8+ hours sleep and hydration.";
   } else {
@@ -101,7 +118,7 @@ export function calculateACWR(
     label = "Acute Workload Spike (> 1.5)";
     batteryLevelPercent = 30;
     colorClass = "text-rose-400 bg-rose-500/20 border-rose-500/30";
-    injuryRiskMultiplier = "High (2.5x to 4x injury risk)";
+    injuryRiskMultiplier = "Large load spike; not a standalone injury prediction";
     actionableDirective =
       "Caution: Acute volume increased too rapidly relative to 28-day chronic baseline. Coach review recommended before high-intensity race pace efforts.";
   }
@@ -117,6 +134,6 @@ export function calculateACWR(
     injuryRiskMultiplier,
     actionableDirective,
     disclaimer:
-      "Gabbett ACWR Workload metrics are non-medical sports science indicators for training load management and fatigue mitigation.",
+      "ACWR is a descriptive non-medical workload ratio, not an injury prediction or medical diagnosis. Thresholds are advisory and must be interpreted with athlete-specific context and other evidence.",
   };
 }

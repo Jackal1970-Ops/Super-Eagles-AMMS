@@ -2,7 +2,7 @@ import React from "react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
-import { calculateAthletePerformanceIndex } from "@/lib/analytics/performanceIndex";
+import { calculateAthletePerformanceIndex, calculateRaceResultImprovement } from "@/lib/analytics/performanceIndex";
 import { calculateClubContributionScore } from "@/lib/analytics/clubContribution";
 import { calculateNormalizedScore } from "@/lib/analytics/normalisation";
 import { evaluateReciprocityPattern } from "@/lib/analytics/reciprocity";
@@ -37,7 +37,7 @@ export default async function AthletesPage(props: {
       },
       raceResults: {
         orderBy: { date: "desc" },
-        take: 2,
+        take: 20,
       },
       clubAttendances: true,
       volunteerContributions: true,
@@ -100,15 +100,18 @@ export default async function AthletesPage(props: {
       perfBase = norm.score;
     }
 
-    // isImproving — exact same condition as dashboard
-    const isImproving = a.athleteNumber === "SEA-003" || perfBase > 78;
-    const isDeclining = a.athleteNumber === "SEA-004";
+    const trend = calculateRaceResultImprovement(a.raceResults);
+    const isImproving = trend.trendClassification === "Improving" || trend.trendClassification === "Rapid Improvement";
+    const isDeclining = trend.trendClassification === "Declining" || trend.trendClassification === "Significant Decline";
+    const reliability = Math.min(95, 55 + a.raceResults.filter((r) => r.verificationStatus === "VERIFIED").length * 8);
 
     const api = calculateAthletePerformanceIndex(
       perfBase,
-      isImproving ? 88 : isDeclining ? 45 : 70,
+      trend.improvementScore,
       80,
-      isDeclining ? 60 : 85
+      reliability,
+      undefined,
+      trend
     );
 
     // Reciprocity review — same as dashboard

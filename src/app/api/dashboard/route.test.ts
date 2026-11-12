@@ -72,6 +72,7 @@ describe("GET /api/dashboard", () => {
         ],
         volunteerContributions: [],
         loyaltyExemptions: [],
+        goals: [],
         sponsorships: [
           {
             allocatedAmount: 15000,
@@ -95,6 +96,7 @@ describe("GET /api/dashboard", () => {
         clubAttendances: [],
         volunteerContributions: [],
         loyaltyExemptions: [],
+        goals: [],
         sponsorships: [],
       },
     ];

@@ -39,8 +39,8 @@ for (let i = 0; i < suites.length; i++) {
 
 console.log(DIVIDER);
 if (allPassed) {
-  console.log("  OVERALL RESULT: 100% ERROR-FREE & PRODUCTION READY");
-  console.log("  ALL 5 TESTING TIERS PASSED WITH ZERO REGRESSIONS");
+  console.log("  OVERALL RESULT: ALL AUTOMATED RELEASE GATES PASSED");
+  console.log("  ALL 5 TESTING TIERS PASSED WITH NO DETECTED REGRESSIONS");
   console.log("  ZERO-CONFIG SQLITE ENGINE VALIDATED ACROSS ALL LIFECYCLES");
 } else {
   console.log("  OVERALL RESULT: VERIFICATION FAILED");

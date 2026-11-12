@@ -2,6 +2,15 @@
 setlocal
 title Super Eagles AMMS Server
 
+REM Keep the live SQLite database on the host PC, never on a mapped/UNC share.
+REM Phones and other workstations connect through HTTP; they do not open the DB file.
+if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
+set "AMMS_DATA_DIR=%LOCALAPPDATA%\SuperEaglesAMMS"
+set "AMMS_DB_PATH=%AMMS_DATA_DIR%\dev.db"
+if not exist "%AMMS_DATA_DIR%" mkdir "%AMMS_DATA_DIR%"
+set "AMMS_DB_URL_PATH=%AMMS_DB_PATH:\=/%"
+set "DATABASE_URL=file:%AMMS_DB_URL_PATH%"
+
 cls
 echo ===============================================================================
 echo   SUPER EAGLES ATHLETICS AND MEMBERSHIP MANAGEMENT SYSTEM (AMMS)
@@ -53,7 +62,7 @@ if not exist "node_modules\" (
 echo.
 
 REM --- Step 4: Database and Prisma Verification ---
-echo [4/6] Verifying SQLite database and seed records...
+echo [4/6] Verifying local SQLite database and seed records...
 if not exist ".env" (
     if exist ".env.example" (
         copy /y ".env.example" ".env" >nul
@@ -68,8 +77,9 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-if not exist "prisma\dev.db" if exist "dev.db" copy /y "dev.db" "prisma\dev.db" >nul
-if not exist "prisma\dev.db" (
+if not exist "%AMMS_DB_PATH%" if exist "prisma\dev.db" copy /y "prisma\dev.db" "%AMMS_DB_PATH%" >nul
+if not exist "%AMMS_DB_PATH%" if exist "dev.db" copy /y "dev.db" "%AMMS_DB_PATH%" >nul
+if not exist "%AMMS_DB_PATH%" (
     echo   - Database not found. Initializing schema and seeding dataset...
     call node ./node_modules/prisma/build/index.js db push
     if %errorlevel% neq 0 exit /b 1
@@ -77,8 +87,9 @@ if not exist "prisma\dev.db" (
     if %errorlevel% neq 0 exit /b 1
     echo   [OK] Database seeded successfully.
 )
-copy /y "prisma\dev.db" "dev.db" >nul
-echo   [OK] Live Prisma database present; root recovery snapshot refreshed.
+copy /y "%AMMS_DB_PATH%" "%AMMS_DATA_DIR%\startup_snapshot.db" >nul
+echo   [OK] Live database: %AMMS_DB_PATH%
+echo   [OK] Local startup recovery snapshot refreshed.
 echo.
 
 REM --- Step 5: Next.js Production Build Verification ---
@@ -114,17 +125,20 @@ echo   - Clubhouse Wi-Fi / LAN (Athletes and Coaches on Phones/Tablets):
 echo     http://%LOCAL_IP%:3000
 echo ===============================================================================
 echo.
-echo   DEVELOPER MASTER ADMIN LOGIN (ACCESS ALL FEATURES):
-echo   - Email:     admin@supereagles.co.za
-echo   - Password:  AdminPass2026!
-echo ===============================================================================
+echo   IMPORTANT: Allow TCP port 3000 through Windows Firewall for private networks
+echo   if phones cannot connect. Do not expose port 3000 directly to the internet.
 echo.
 
-REM Open browser automatically in background
-start http://localhost:3000
+REM Refuse to kill an unrelated service that already owns the configured port.
+powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue) { exit 1 }"
+if %errorlevel% neq 0 (
+    echo [ERROR] TCP port 3000 is already in use. Stop the existing service or configure another port.
+    pause
+    exit /b 1
+)
 
-REM Ensure port 3000 is clean and available
-powershell -Command "Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }" >nul 2>nul
+REM Open the local browser after giving the server a moment to bind.
+start "" /b cmd /c "timeout /t 2 /nobreak ^>nul ^& start http://localhost:3000"
 
 REM Run Next.js server bound to 0.0.0.0 on port 3000
 if "%1"=="dev" (

@@ -16,6 +16,7 @@ import fs from "fs";
 import path from "path";
 import { prisma } from "@/lib/prisma";
 import { runComprehensiveSystemHealthCheck } from "./healthCheckEngine";
+import { resolveSqliteDatabasePath } from "@/lib/backup/backupEngine";
 
 export interface SelfHealingAction {
   category: "DATABASE" | "CONFIG" | "PACKAGES" | "HONORS" | "STORAGE";
@@ -41,22 +42,22 @@ export async function executeSelfHealing(userId?: string): Promise<SelfHealingRe
   // 1. Database Mirror Synchronization Repair
   // ---------------------------------------------------------------------------
   try {
-    const rootDb = path.resolve("./dev.db");
-    const prismaDb = path.resolve("./prisma/dev.db");
-    const rootExists = fs.existsSync(rootDb);
-    const prismaExists = fs.existsSync(prismaDb);
+    const primaryDb = resolveSqliteDatabasePath();
+    const recoveryDb = path.join(path.dirname(primaryDb), "recovery_snapshot.db");
+    const primaryExists = fs.existsSync(primaryDb);
+    const recoveryExists = fs.existsSync(recoveryDb);
 
-    if (rootExists && prismaExists) {
-      const rootStat = fs.statSync(rootDb);
-      const prismaStat = fs.statSync(prismaDb);
+    if (primaryExists && recoveryExists) {
+      const primaryStat = fs.statSync(primaryDb);
+      const recoveryStat = fs.statSync(recoveryDb);
 
-      if (rootStat.size !== prismaStat.size || Math.abs(rootStat.mtimeMs - prismaStat.mtimeMs) > 1000) {
-        fs.copyFileSync(prismaDb, rootDb);
+      if (primaryStat.size !== recoveryStat.size || Math.abs(primaryStat.mtimeMs - recoveryStat.mtimeMs) > 1000) {
+        fs.copyFileSync(primaryDb, recoveryDb);
         actions.push({
           category: "STORAGE",
-          action: "Refreshed root SQLite recovery snapshot from prisma/dev.db",
+          action: "Refreshed local SQLite recovery snapshot",
           status: "FIXED",
-          details: `Updated ./dev.db (${prismaStat.size} bytes)`,
+          details: `Updated ${recoveryDb} (${primaryStat.size} bytes)`,
         });
         repairedCount++;
       } else {
@@ -67,21 +68,21 @@ export async function executeSelfHealing(userId?: string): Promise<SelfHealingRe
           details: "Root recovery snapshot is current with the live Prisma database",
         });
       }
-    } else if (prismaExists && !rootExists) {
-      fs.copyFileSync(prismaDb, rootDb);
+    } else if (primaryExists && !recoveryExists) {
+      fs.copyFileSync(primaryDb, recoveryDb);
       actions.push({
         category: "STORAGE",
-        action: "Created missing root recovery snapshot from prisma/dev.db",
+        action: "Created missing local recovery snapshot",
         status: "FIXED",
         details: "Copied database to root workspace",
       });
       repairedCount++;
-    } else if (rootExists && !prismaExists) {
+    } else if (!primaryExists) {
       actions.push({
         category: "STORAGE",
         action: "Live Prisma database is missing",
         status: "FAILED",
-        details: "A root recovery snapshot exists, but automatic restoration is disabled to avoid overwriting an unknown database state.",
+        details: `Primary database is missing at ${primaryDb}; automatic restoration is disabled to avoid overwriting an unknown state.`,
       });
     }
   } catch (err: any) {

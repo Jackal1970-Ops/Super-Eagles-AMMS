@@ -143,7 +143,7 @@ Run all 18 automated mathematical formula tests:
 ```powershell
 npm.cmd test
 ```
-Tests verify numerical precision across pace deterioration, World Athletics normalisation, API weights, CCLI exemptions, and CSS recommendations.
+Tests verify numerical precision across pace deterioration, club-policy normalisation, Riegel projections, API weights, CCLI exemptions, and CSS recommendations. Official World Athletics result scores are not approximated.
 
 ---
 

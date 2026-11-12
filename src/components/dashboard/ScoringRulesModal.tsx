@@ -268,7 +268,7 @@ export function ScoringRulesModal({
                 </div>
                 <div className="mt-2 space-y-1 text-[11px] text-slate-300 leading-normal">
                   <p>• <strong>Scope</strong>: Monthly &amp; Yearly Elite Competitive Honors.</p>
-                  <p>• <strong>Criteria</strong>: Verified top-tier championship performance, high World Athletics points, or major podium finish (Comrades, Two Oceans, Provincial Champs).</p>
+                  <p>• <strong>Criteria</strong>: Verified championship performance, strong club-policy performance score, or major podium finish (Comrades, Two Oceans, Provincial Champs).</p>
                   <p>• <strong>Graph Placement</strong>: Gold halo with prominent pin on the Performance Progression curve.</p>
                 </div>
               </div>

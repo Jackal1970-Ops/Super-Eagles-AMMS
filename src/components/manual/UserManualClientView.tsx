@@ -54,14 +54,14 @@ export function UserManualClientView({ userRole, userName }: UserManualClientVie
       number: "03",
       title: "Coaching Intelligence & Sports Science",
       icon: Trophy,
-      summary: "Athlete Performance Index (API), Gabbett ACWR, and Riegel predictions.",
+      summary: "Athlete Performance Index (API), advisory workload ratios, and Riegel predictions.",
     },
     {
       id: "ch4",
       number: "04",
       title: "Official Races & Personal Bests",
       icon: FileCheck,
-      summary: "Race verification, World Athletics normalization, and Comrades seeding.",
+      summary: "Race verification, transparent club normalization, and event qualification evidence.",
     },
     {
       id: "ch5",
@@ -94,9 +94,9 @@ export function UserManualClientView({ userRole, userName }: UserManualClientVie
     {
       id: "ch9",
       number: "09",
-      title: "Authoritative Mathematical Formulations",
+      title: "Mathematical Formulations & Evidence Limits",
       icon: BookOpen,
-      summary: "Peer-reviewed citations (Riegel 1977, Gabbett 2016, Haversine, PDI).",
+      summary: "Published references, club-policy calculations, and clearly stated evidence limits.",
     },
     {
       id: "ch10",
@@ -274,14 +274,14 @@ export function UserManualClientView({ userRole, userName }: UserManualClientVie
               </div>
               <div className="text-xs leading-relaxed text-slate-300 space-y-3">
                 <p>
-                  Our sports science engine integrates Dr. Tim Gabbett's Acute:Chronic Workload Ratio (ACWR) and modified Riegel power-law predictions.
+                  The coaching engine uses session-RPE workload arithmetic, an advisory acute:chronic workload ratio, and modified Riegel power-law predictions. These are decision-support signals, not medical diagnoses.
                 </p>
                 <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 font-mono text-[11px] text-emerald-300">
                   ACWR = Past 7 Days Load (Acute) / Rolling 28 Days Weekly Average (Chronic)
                   <br />
-                  • 0.8 - 1.3: Optimal "Sweet Spot" (Low Relative Injury Risk)
+                  • 0.8 - 1.3: Club advisory range; interpret with athlete history and coach judgement
                   <br />
-                  • &gt; 1.5: Danger Zone (Spike in Workload / Overtraining Hazard)
+                  • &gt; 1.5: Large workload change requiring contextual review; not an injury probability
                 </div>
               </div>
             </div>
@@ -536,18 +536,18 @@ export function UserManualClientView({ userRole, userName }: UserManualClientVie
               <div className="border-b border-slate-700 pb-3">
                 <span className="text-xs font-mono text-amber-400 font-bold uppercase tracking-wider">Chapter 09</span>
                 <h2 className="text-2xl font-black tracking-tight text-white mt-1">
-                  Authoritative Mathematical Formulations & Online Benchmarks
+                  Mathematical Formulations, References & Evidence Limits
                 </h2>
               </div>
               <div className="text-xs leading-relaxed text-slate-300 space-y-3">
                 <p>
-                  Every mathematical calculation in the Super Eagles platform is benchmarked against peer-reviewed literature:
+                  Published formulas are separated from club policy scores. Passing an arithmetic benchmark does not turn a club threshold into an official federation score:
                 </p>
                 <div className="space-y-2 font-mono text-[11px] bg-slate-900/90 p-4 rounded-xl border border-slate-800">
                   <div>1. Peter Riegel (1977) Race Prediction Power Law: T₂ = T₁ × (D₂ / D₁)^1.06</div>
-                  <div>2. Dr. Tim Gabbett (2016 BJSM) Workload Ratio: Acute (7d) / Chronic (28d)</div>
+                  <div>2. Foster session-RPE load (duration × RPE) and descriptive 7d:28d workload ratio</div>
                   <div>3. IUGG / NOAA Geodesic Haversine Formula: R = 6,371,000 meters</div>
-                  <div>4. World Athletics Split Decay: PDI = ((Split₂ - Split₁) / Split₁) × 100</div>
+                  <div>4. Pace percentage change: PDI = ((Split₂ - Split₁) / Split₁) × 100; tiers are club policy</div>
                 </div>
               </div>
             </div>

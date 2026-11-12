@@ -29,6 +29,7 @@ import { formatWhatsAppMedallionMessage } from "@/lib/sharing/whatsappMedallionS
 import { generateQrMatrix, generateQrSvg } from "@/lib/qr/qrGenerator";
 import { isUnsafeProductionSecret } from "@/lib/auth/session";
 import { CSV_TEMPLATES } from "@/app/api/admin/csv-template/route";
+import { resolveSqliteDatabasePath } from "@/lib/backup/backupEngine";
 
 export interface CheckpointResult {
   id: string;
@@ -126,19 +127,19 @@ export async function runComprehensiveSystemHealthCheck(): Promise<SystemHealthR
         metrics: { provider: "postgresql" },
       };
     }
-    const rootDbPath = path.resolve("./dev.db");
-    const prismaDbPath = path.resolve("./prisma/dev.db");
-    const rootExists = fs.existsSync(rootDbPath);
-    const prismaExists = fs.existsSync(prismaDbPath);
+    const primaryDbPath = resolveSqliteDatabasePath();
+    const recoveryDbPath = path.join(path.dirname(primaryDbPath), "recovery_snapshot.db");
+    const primaryExists = fs.existsSync(primaryDbPath);
+    const recoveryExists = fs.existsSync(recoveryDbPath);
 
-    const primarySize = prismaExists ? fs.statSync(prismaDbPath).size : 0;
-    const passed = prismaExists && primarySize > 0;
+    const primarySize = primaryExists ? fs.statSync(primaryDbPath).size : 0;
+    const passed = primaryExists && primarySize > 0;
     return {
       passed,
       message: passed
         ? "Live Prisma SQLite database is present and readable; optional root recovery snapshot detected"
         : "Live Prisma SQLite database file is missing or empty",
-      metrics: { primaryPath: prismaDbPath, primarySizeBytes: primarySize, recoverySnapshotExists: rootExists },
+      metrics: { primaryPath: primaryDbPath, primarySizeBytes: primarySize, recoverySnapshotExists: recoveryExists },
     };
   });
 
@@ -468,7 +469,7 @@ export async function runComprehensiveSystemHealthCheck(): Promise<SystemHealthR
     return {
       passed,
       message: passed
-        ? `All ${report.totalBenchmarks} scientific models benchmarked against peer-reviewed standards (Riegel 1977, Gabbett 2016, IUGG/NOAA, World Athletics)`
+        ? `All ${report.totalBenchmarks} reference calculations passed (Riegel distance model, workload-ratio arithmetic, IUGG geodesy, and club pace policy)`
         : `${report.totalBenchmarks - report.passedBenchmarks} benchmarks deviated from authoritative tolerance`,
       metrics: { totalBenchmarks: report.totalBenchmarks, passed: report.passedBenchmarks },
     };
@@ -560,7 +561,7 @@ export async function runComprehensiveSystemHealthCheck(): Promise<SystemHealthR
     healthScorePercent === 100 ? "HEALTHY" : healthScorePercent >= 80 ? "DEGRADED" : "CRITICAL";
 
   const mem = process.memoryUsage();
-  const dbPath = isSqliteDatabase ? path.resolve("./prisma/dev.db") : path.resolve("./dev.db");
+  const dbPath = isSqliteDatabase ? resolveSqliteDatabasePath() : path.resolve("./dev.db");
   const dbSize = fs.existsSync(dbPath) ? fs.statSync(dbPath).size : 0;
 
   return {
@@ -577,7 +578,7 @@ export async function runComprehensiveSystemHealthCheck(): Promise<SystemHealthR
       nodeVersion: process.version,
       uptimeSeconds: Math.round(process.uptime()),
       dbSizeBytes: dbSize,
-      dbMirrored: !isSqliteDatabase || fs.existsSync(path.resolve("./dev.db")),
+      dbMirrored: !isSqliteDatabase || fs.existsSync(path.join(path.dirname(dbPath), "recovery_snapshot.db")),
     },
     checkpoints,
   };

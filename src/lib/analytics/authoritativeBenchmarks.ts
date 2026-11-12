@@ -6,7 +6,7 @@
  * 1. Peter Riegel (1977) "Athletic Records and Human Endurance", American Scientist / Runner's World
  * 2. Dr. Tim Gabbett (2016) "The training—injury prevention paradox", British Journal of Sports Medicine (BJSM)
  * 3. IUGG / NOAA Standard Geodesic Haversine Great-Circle Navigation Formula
- * 4. World Athletics / Journal of Sports Sciences Pace Degradation & Split Dynamics
+ * 4. Pace split arithmetic with club-defined durability classifications
  * 5. Foster et al. (2001) Session-RPE Training Impulse Integration
  */
 
@@ -112,7 +112,7 @@ export function runAuthoritativeMathematicalBenchmarks(): AuthoritativeBenchmark
 
     benchmarks.push({
       id: "bm-gabbett-acwr-2016",
-      name: "Dr. Tim Gabbett (2016) Acute:Chronic Workload Ratio (BJSM)",
+      name: "Rolling Acute:Chronic Workload Ratio Arithmetic",
       formula: "ACWR = Acute Load (7-day) / Rolling Chronic Load (28-day 4-wk average)",
       authoritativeSource: "Dr. Tim J. Gabbett, British Journal of Sports Medicine (BJSM), 2016;50:273-280",
       sourceUrl: "https://bjsm.bmj.com/content/50/5/273",
@@ -125,7 +125,7 @@ export function runAuthoritativeMathematicalBenchmarks(): AuthoritativeBenchmark
       },
       passed,
       scientificExplanation:
-        "Validates that the acute:chronic workload model calculates injury risk ratios in accordance with the BJSM consensus framework (Sweet Spot: 0.8–1.3, Danger Zone: >1.5).",
+        "Validates the 7-day to 28-day weekly-average load arithmetic. The ratio is descriptive and is not treated as a standalone injury prediction.",
     });
   }
 
@@ -177,9 +177,9 @@ export function runAuthoritativeMathematicalBenchmarks(): AuthoritativeBenchmark
   }
 
   // ---------------------------------------------------------------------------
-  // 4. World Athletics Pace Deterioration & Fading Dynamics (PDI)
+  // 4. Pace Deterioration Arithmetic (PDI)
   // ---------------------------------------------------------------------------
-  // Source: Santos-Lozano et al., Journal of Sports Sciences / World Athletics Pacing Analysis.
+  // The percentage formula is arithmetic; classification thresholds are club policy.
   // Formula: ((Late Pace - Early Pace) / Early Pace) * 100
   // Test Vector: Early 210s/km (3:30/km), Late 220.5s/km (3:40.5/km) -> +5.00%
   {
@@ -194,9 +194,9 @@ export function runAuthoritativeMathematicalBenchmarks(): AuthoritativeBenchmark
 
     benchmarks.push({
       id: "bm-world-athletics-pdi",
-      name: "World Athletics Aerobic Split Decay & Durability Index (PDI)",
+      name: "Pace Split Deterioration Arithmetic & Club Policy Tier",
       formula: "PDI = ((Split₂_Pace - Split₁_Pace) / Split₁_Pace) × 100",
-      authoritativeSource: "Journal of Sports Sciences / World Athletics Competition Analytics",
+      authoritativeSource: "Arithmetic percentage change; durability tier thresholds are Super Eagles club policy",
       sourceUrl: "https://worldathletics.org/",
       testVector: {
         inputs: { earlyPaceSeconds: early, latePaceSeconds: late },
@@ -207,7 +207,7 @@ export function runAuthoritativeMathematicalBenchmarks(): AuthoritativeBenchmark
       },
       passed,
       scientificExplanation:
-        "Validates that marathon and ultra-distance pace decay calculation precisely classifies endurance degradation without mathematical bias.",
+        "Validates percentage-change arithmetic. The GOOD tier is an internal coaching policy, not an official World Athletics classification.",
     });
   }
 

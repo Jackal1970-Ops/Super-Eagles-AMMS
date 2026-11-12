@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { calculateClubSponsorshipScore } from "@/lib/analytics/sponsorshipScore";
 import { calculateClubContributionScore } from "@/lib/analytics/clubContribution";
-import { calculateAthletePerformanceIndex } from "@/lib/analytics/performanceIndex";
+import { calculateAthletePerformanceIndex, calculateRaceResultImprovement } from "@/lib/analytics/performanceIndex";
 import { evaluateReciprocityPattern } from "@/lib/analytics/reciprocity";
 import { SponsorshipClientTabs } from "@/components/sponsorship/SponsorshipClientTabs";
 import { SponsorRoiData } from "@/components/sponsorship/SponsorRoiSummaryView";
@@ -77,14 +77,16 @@ export default async function SponsorshipPage() {
     });
 
     // API
-    const isImproving = athlete.athleteNumber === "SEA-003";
-    const isDeclining = athlete.athleteNumber === "SEA-004";
+    const trend = calculateRaceResultImprovement(athlete.raceResults);
     const basePerf = athlete.athleteStatus === "ELITE" ? 92 : athlete.athleteStatus === "PERFORMANCE" ? 78 : 68;
+    const reliability = Math.min(95, 55 + athlete.raceResults.filter((r) => r.verificationStatus === "VERIFIED").length * 8);
     const api = calculateAthletePerformanceIndex(
       basePerf,
-      isImproving ? 88 : isDeclining ? 46 : 70,
+      trend.improvementScore,
       80,
-      isDeclining ? 62 : 84
+      reliability,
+      undefined,
+      trend
     );
 
     // CSS

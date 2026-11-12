@@ -22,7 +22,7 @@ import {
   ChevronRight,
   HelpCircle,
 } from "lucide-react";
-import { calculateAthletePerformanceIndex } from "@/lib/analytics/performanceIndex";
+import { calculateAthletePerformanceIndex, calculateRaceResultImprovement } from "@/lib/analytics/performanceIndex";
 import { calculateClubContributionScore } from "@/lib/analytics/clubContribution";
 import { calculateClubSponsorshipScore } from "@/lib/analytics/sponsorshipScore";
 import { calculatePaceDeterioration, classifyPaceDurability, formatDuration, formatPace } from "@/lib/analytics/pace";
@@ -195,13 +195,16 @@ export default async function AthleteDetailPage({ params }: AthletePageProps) {
   const pdi = classifyPaceDurability(paceDetPct, true);
 
   // 3. Athlete Performance Index (API)
-  const isImproving = athlete.athleteNumber === "SEA-003";
-  const isDeclining = athlete.athleteNumber === "SEA-004";
+  const trend = calculateRaceResultImprovement(verifiedRaces);
+  const isDeclining = trend.trendClassification === "Declining" || trend.trendClassification === "Significant Decline";
+  const reliability = Math.min(95, 55 + verifiedRaces.length * 8);
   const apiResult = calculateAthletePerformanceIndex(
     rawPerf,
-    isImproving ? 88 : isDeclining ? 45 : 70,
+    trend.improvementScore,
     80,
-    isDeclining ? 60 : 85
+    reliability,
+    undefined,
+    trend
   );
 
   // 4. Club Sponsorship Score (CSS)
@@ -213,7 +216,7 @@ export default async function AthleteDetailPage({ params }: AthletePageProps) {
     ccliResult.totalScore,
     90,
     undefined,
-    athlete.athleteNumber === "SEA-007" && false
+    false
   );
 
   // 5. Athlete Readiness Score (ARCS) - Coaching metric only

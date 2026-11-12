@@ -86,7 +86,7 @@ export function ExecutiveKpiCards({ kpis }: ExecutiveKpiCardsProps) {
     {
       label: "Upcoming Target Goals",
       value: kpis.upcomingTargetRacesCount,
-      subtext: `${kpis.athletesLikelyToAchieveTargetsCount} Projected Achieved`,
+      subtext: `${kpis.athletesLikelyToAchieveTargetsCount} Active Target Plans`,
       icon: Target,
       color: "text-indigo-300 bg-indigo-950/70 border border-indigo-800/50",
       href: "/races",

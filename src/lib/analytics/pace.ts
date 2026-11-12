@@ -13,21 +13,17 @@ export function formatDuration(totalSeconds: number): string {
 
 export function formatPace(secondsPerKm: number): string {
   if (!secondsPerKm || isNaN(secondsPerKm) || secondsPerKm <= 0) return "--:--/km";
-  const minutes = Math.floor(secondsPerKm / 60);
-  const seconds = Math.round(secondsPerKm % 60);
+  const roundedSeconds = Math.round(secondsPerKm);
+  const minutes = Math.floor(roundedSeconds / 60);
+  const seconds = roundedSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, "0")}/km`;
 }
 
 export function parsePace(paceStr: string): number {
   if (!paceStr) return 0;
-  const clean = paceStr.replace("/km", "").trim();
-  const parts = clean.split(":");
-  if (parts.length === 2) {
-    const mins = parseInt(parts[0], 10) || 0;
-    const secs = parseInt(parts[1], 10) || 0;
-    return mins * 60 + secs;
-  }
-  return 0;
+  const match = paceStr.trim().match(/^(\d+):([0-5]\d)(?:\/km)?$/i);
+  if (!match) return 0;
+  return Number(match[1]) * 60 + Number(match[2]);
 }
 
 export function calculatePace(distanceKm: number, durationSeconds: number): number {

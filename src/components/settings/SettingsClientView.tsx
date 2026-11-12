@@ -402,7 +402,7 @@ export function SettingsClientView({
                 Google Gemini AI Intelligence & Performance Coaching
               </h2>
               <p className="text-xs text-slate-400">
-                Augment coaching insights with Google Gemini sports science intelligence (Noakes, Daniels, Riegel, Gabbett).
+                Augment coaching insights with Google Gemini. Generated content remains advisory and must be checked against recorded evidence and qualified coaching judgement.
               </p>
             </div>
           </div>

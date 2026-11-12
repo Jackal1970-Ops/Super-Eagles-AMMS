@@ -47,6 +47,45 @@ export interface PerformanceIndexResult {
   trend: ImprovementBreakdown;
 }
 
+export interface RacePerformanceObservation {
+  date: Date | string;
+  distanceKm: number;
+  officialTimeSeconds: number;
+  verificationStatus?: string;
+}
+
+/** Derives improvement from verified race history, normalized to 10 km. */
+export function calculateRaceResultImprovement(
+  results: readonly RacePerformanceObservation[]
+): ImprovementBreakdown {
+  const valid = results
+    .filter((result) =>
+      result.verificationStatus !== "REJECTED" &&
+      Number.isFinite(result.distanceKm) && result.distanceKm > 0 &&
+      Number.isFinite(result.officialTimeSeconds) && result.officialTimeSeconds > 0
+    )
+    .map((result) => ({
+      date: new Date(result.date),
+      equivalent10kSeconds: result.officialTimeSeconds * Math.pow(10 / result.distanceKm, 1.06),
+    }))
+    .filter((result) => !Number.isNaN(result.date.getTime()) && Number.isFinite(result.equivalent10kSeconds))
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  if (valid.length < 2) return calculateImprovementScore(0, 0, 0);
+
+  const latest = valid[0];
+  const changeForMonths = (months: number): number => {
+    const cutoff = new Date(latest.date);
+    cutoff.setUTCMonth(cutoff.getUTCMonth() - months);
+    const baseline = valid.find((result, index) => index > 0 && result.date <= cutoff);
+    if (!baseline) return 0;
+    return ((baseline.equivalent10kSeconds - latest.equivalent10kSeconds) /
+      baseline.equivalent10kSeconds) * 100;
+  };
+
+  return calculateImprovementScore(changeForMonths(3), changeForMonths(6), changeForMonths(12));
+}
+
 /**
  * Classifies longitudinal performance trend based on percentage change.
  * Negative deterioration = faster times = improvement!
